@@ -1,0 +1,76 @@
+#!/bin/sh
+#  Copyright (C) 2026 DefKorns (https://defkorns.github.io/LICENSE)
+#
+#  This program is free software: you can redistribute it and/or modify
+#  it under the terms of the GNU General Public License as published by
+#  the Free Software Foundation, either version 3 of the License, or
+#  (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+#
+# Shonen Jump firmware on NES/SNES hardware: load clovercon with detect lines before S78clvcon.
+# shellcheck disable=SC1091,SC2154,SC3043,SC3046
+
+DETECT_PARAMS="1,195,2,194"
+
+stockFirmware() {
+  local sha1
+  sha1="$(sunxi-flash log_read 68 1 | dd status=none bs=32 skip=18 count=1 | hexdump -e '/1 "%02x"' -n20)"
+  [ -n "$sha1" ] || return 1
+  grep -F " $sha1" /etc/firmwaredb | head -n1 | cut -d' ' -f1
+}
+
+moduleName() {
+  local module="clovercon"
+  [ -f "/lib/modules/$(uname -r)/extra/$module.ko" ] || module="clvcon"
+  echo "$module"
+}
+
+start() {
+  lsmod | grep -qE "clvcon|clovercon" && return 0
+  source /etc/preinit
+  script_short_init
+
+  grep -qF "dp-hvcj" "$squashfs/etc/issue" 2>/dev/null || return 0
+  [ "$(cat "$squashfs/etc/clover/boardtype" 2>/dev/null)" = "dp-hvc" ] || return 0
+  case "$(stockFirmware)" in
+    dp-nes-*|dp-shvc-*) ;;
+    *) return 0 ;;
+  esac
+
+  local module
+  module="$(moduleName)"
+  echo "$module: Shonen Jump firmware on NES/SNES hardware, enabling detect lines"
+  if [ "$cfg_clovercon_enabled" = "y" ]; then
+    modprobe "$module" "module_params=$DETECT_PARAMS" \
+             "home_combination=${cfg_clovercon_home_combination:-0x24}" \
+             "autofire=${cfg_clovercon_autofire:-1}" \
+             "autofire_xy=${cfg_clovercon_autofire_xy:-0}" \
+             "autofire_interval=${cfg_clovercon_autofire_interval:-8}" \
+             "fc_start=${cfg_clovercon_fc_start:-0}"
+  else
+    modprobe "$module" "module_params=$DETECT_PARAMS"
+  fi
+}
+
+case "$1" in
+  start)
+    start
+  ;;
+  stop|status)
+    /etc/init.d/S78clvcon "$1"
+  ;;
+  restart)
+    /etc/init.d/S78clvcon stop
+    start
+  ;;
+  *)
+    echo "Usage: $(basename "$0") {start|stop|status|restart}"
+    exit 1
+esac
