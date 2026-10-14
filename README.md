@@ -15,7 +15,7 @@ Hakchi only catches this case when the stock kernel (the backup in sector 68) is
 It installs `/etc/init.d/S77clvcon_detect`, which runs before hakchi's `S78clvcon`. It only acts if **every** check below passes:
 
 | Check | Value |
-|---|---|
+| --- | --- |
 | The firmware is Shonen Jump | `$squashfs/etc/issue` contains `dp-hvcj` |
 | The firmware expects wired controllers | `$squashfs/etc/clover/boardtype` = `dp-hvc` |
 | The hardware is an NES/SNES Classic | the stock kernel (sector 68) is in `/etc/firmwaredb` as `dp-nes-*` or `dp-shvc-*` |
@@ -67,4 +67,4 @@ The wrappers compare the exact value, so A+Down held together doesn't work. A mu
 
 ## License
 
-GPL-3.0-or-later.
+GPLv3 or later — see [LICENSE](LICENSE).
