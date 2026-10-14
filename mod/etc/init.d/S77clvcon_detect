@@ -14,7 +14,7 @@
 #  You should have received a copy of the GNU General Public License
 #  along with this program.  If not, see <https://www.gnu.org/licenses/>.
 #
-# Shonen Jump firmware on NES/SNES hardware: load clovercon with detect lines before S78clvcon.
+# Famicom Mini / Shonen Jump firmware on NES/SNES hardware: load clovercon with detect lines before S78clvcon.
 # shellcheck disable=SC1091,SC2154,SC3043,SC3046
 
 DETECT_PARAMS="1,195,2,194"
@@ -37,7 +37,7 @@ start() {
   source /etc/preinit
   script_short_init
 
-  grep -qF "dp-hvcj" "$squashfs/etc/issue" 2>/dev/null || return 0
+  grep -qF "dp-hvc" "$squashfs/etc/issue" 2>/dev/null || return 0
   [ "$(cat "$squashfs/etc/clover/boardtype" 2>/dev/null)" = "dp-hvc" ] || return 0
   case "$(stockFirmware)" in
     dp-nes-*|dp-shvc-*) ;;
@@ -46,7 +46,7 @@ start() {
 
   local module
   module="$(moduleName)"
-  echo "$module: Shonen Jump firmware on NES/SNES hardware, enabling detect lines"
+  echo "$module: Famicom firmware on NES/SNES hardware, enabling detect lines"
   if [ "$cfg_clovercon_enabled" = "y" ]; then
     modprobe "$module" "module_params=$DETECT_PARAMS" \
              "home_combination=${cfg_clovercon_home_combination:-0x24}" \

@@ -1,0 +1,4 @@
+# shellcheck shell=sh disable=SC2154
+# the Shonen-only release ships the same init script; drop its record so a later uninstall can't delete ours
+[ -f "$installpath/hmod/uninstall-shonen_jump_clovercon_fix" ] && pack_uninstall shonen_jump_clovercon_fix
+return 1

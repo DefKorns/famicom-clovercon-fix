@@ -1,10 +1,10 @@
-# Shonen Jump Clovercon Fix
+# Famicom Clovercon Fix
 
-Hakchi CE module for the **Shonen Jump firmware running on NES or SNES Classic hardware**. It fixes controllers that stop responding and the home menu freezing or going into a loop.
+Hakchi CE module for the **Famicom Mini or Shonen Jump firmware running on NES or SNES Classic hardware**. It fixes controllers that stop responding and the home menu freezing or going into a loop.
 
 ## The problem
 
-The Famicom Mini Shonen Jump has wired controllers, so its firmware sets `boardtype=dp-hvc`. Hakchi's `S78clvcon` reads that value and loads the `clovercon` driver without controller detect lines (`module_params=1,-1,2,-1`).
+The Famicom Mini and the Shonen Jump edition have wired controllers, so their firmware sets `boardtype=dp-hvc`. Hakchi's `S78clvcon` reads that value and loads the `clovercon` driver without controller detect lines (`module_params=1,-1,2,-1`).
 
 The NES and SNES Classic have detachable controllers, whose detect lines are on GPIO 195/194. Without them both ports are always registered, even when nothing is plugged in. This produces a phantom controller 2 and constant I2C polling of empty ports, and the stock UI stops responding.
 
@@ -16,7 +16,7 @@ It installs `/etc/init.d/S77clvcon_detect`, which runs before hakchi's `S78clvco
 
 | Check | Value |
 | --- | --- |
-| The firmware is Shonen Jump | `$squashfs/etc/issue` contains `dp-hvcj` |
+| The firmware is a Famicom one | `$squashfs/etc/issue` contains `dp-hvc` (Famicom Mini `dp-hvc-*`, Shonen Jump `dp-hvcj-*`) |
 | The firmware expects wired controllers | `$squashfs/etc/clover/boardtype` = `dp-hvc` |
 | The hardware is an NES/SNES Classic | the stock kernel (sector 68) is in `/etc/firmwaredb` as `dp-nes-*` or `dp-shvc-*` |
 
@@ -25,19 +25,18 @@ When all three pass, it loads `clovercon` with `module_params=1,195,2,194` and k
 If any check fails, the script exits without doing anything and `S78clvcon` loads the driver as usual. This covers:
 
 - NES/SNES Classic with their own firmware
-- Famicom Mini
-- a real Shonen Jump (its kernel is `dp-hvc-*`)
+- a real Famicom Mini or Shonen Jump (their kernel is `dp-hvc-*`)
 - a stock kernel that isn't in `firmwaredb`
 
 ## Requirements
 
 - Hakchi CE with the madmonkey kernel (the one that provides `S78clvcon` and `clovercon.ko`)
-- Shonen Jump firmware installed on an NES or SNES Classic
+- Famicom Mini or Shonen Jump firmware installed on an NES or SNES Classic
 
 ## Install
 
 1. Build the `.hmod` (see below) or download it from the releases.
-2. In Hakchi2 CE: **Kernel → Install/uninstall modules → Add more mods**, choose `shonen_jump_clovercon_fix.hmod` and install.
+2. In Hakchi2 CE: **Kernel → Install/uninstall modules → Add more mods**, choose `famicom_clovercon_fix.hmod` and install. It replaces the older `shonen_jump_clovercon_fix` module if that one is installed.
 3. Reboot the console.
 
 To check over SSH:
@@ -54,7 +53,7 @@ From Git Bash, WSL or Linux:
 ./build.sh
 ```
 
-The file is written to `out/shonen_jump_clovercon_fix.hmod`.
+The file is written to `out/famicom_clovercon_fix.hmod`.
 
 ## RetroArch shortcut
 

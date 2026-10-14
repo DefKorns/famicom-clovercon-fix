@@ -18,13 +18,13 @@
 set -e
 cd "$(dirname "$0")"
 
-out="out/shonen_jump_clovercon_fix.hmod"
-tarball="out/shonen_jump_clovercon_fix.tar"
+out="out/famicom_clovercon_fix.hmod"
+tarball="out/famicom_clovercon_fix.tar"
 mkdir -p out
 rm -f "$out" "$tarball"
 
 tar --force-local -cf "$tarball" --owner=0 --group=0 --mode=644 -C mod ./readme.md
-tar --force-local -rf "$tarball" --owner=0 --group=0 --mode=755 -C mod ./uninstall ./etc
+tar --force-local -rf "$tarball" --owner=0 --group=0 --mode=755 -C mod ./install ./uninstall ./etc
 gzip -9 -n -c "$tarball" > "$out"
 rm -f "$tarball"
 
