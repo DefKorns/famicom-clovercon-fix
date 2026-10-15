@@ -1,9 +1,3 @@
----
-Name: Famicom Clovercon Fix
-Creator: DefKorns
-Category: System
-Version: 1.1.0
----
 Fixes unresponsive controllers and a frozen home menu when the Famicom Mini or
 Shonen Jump firmware runs on NES or SNES Classic hardware.
 

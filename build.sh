@@ -1,31 +1,28 @@
-#!/bin/sh
-#  Copyright (C) 2026 DefKorns (https://defkorns.github.io/LICENSE)
-#
-#  This program is free software: you can redistribute it and/or modify
-#  it under the terms of the GNU General Public License as published by
-#  the Free Software Foundation, either version 3 of the License, or
-#  (at your option) any later version.
-#
-#  This program is distributed in the hope that it will be useful,
-#  but WITHOUT ANY WARRANTY; without even the implied warranty of
-#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-#  GNU General Public License for more details.
-#
-#  You should have received a copy of the GNU General Public License
-#  along with this program.  If not, see <https://www.gnu.org/licenses/>.
-#
-# Explicit modes: Windows checkouts lose exec bits.
-set -e
-cd "$(dirname "$0")"
+#!/usr/bin/env bash
+set -euo pipefail
 
-out="out/famicom_clovercon_fix.hmod"
-tarball="out/famicom_clovercon_fix.tar"
-mkdir -p out
-rm -f "$out" "$tarball"
+# stops Git Bash from mangling the /src path below into a Windows path
+export MSYS_NO_PATHCONV=1
 
-tar --force-local -cf "$tarball" --owner=0 --group=0 --mode=644 -C mod ./readme.md
-tar --force-local -rf "$tarball" --owner=0 --group=0 --mode=755 -C mod ./install ./uninstall ./etc
-gzip -9 -n -c "$tarball" > "$out"
-rm -f "$tarball"
+for sub in vendor/hmod-build; do
+  [ -n "$(ls -A "$sub" 2>/dev/null)" ] || git submodule update --init --recursive "$sub"
+done
 
-tar --force-local -tvzf "$out"
+echo "==> Getting the toolchain image..."
+IMAGE=$(sh vendor/hmod-build/toolchain-image.sh)
+
+src="$PWD"
+command -v cygpath >/dev/null && src="$(cygpath -m "$PWD")"
+
+# on Linux/WSL, files a root container writes stay root-owned and can't be removed later
+user=()
+[ "$(uname -s)" = Linux ] && user=(--user "$(id -u):$(id -g)" -e HOME=/tmp)
+
+echo "==> Running make inside the container..."
+docker run --rm "${user[@]}" -v "$src:/src" -w /src "$IMAGE" \
+  sh -c "git config --global --add safe.directory '*' 2>/dev/null; make CROSS_PREFIX=arm-linux-gnueabihf- $*"
+
+# framework objects would leave the vendor submodule dirty
+find vendor -name '*.o' -type f -delete
+
+ls -la out/*.hmod 2>/dev/null
