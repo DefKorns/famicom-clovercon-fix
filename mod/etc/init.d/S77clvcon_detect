@@ -22,8 +22,11 @@ DETECT_PARAMS="1,195,2,194"
 stockFirmware() {
   local sha1
   sha1="$(sunxi-flash log_read 68 1 | dd status=none bs=32 skip=18 count=1 | hexdump -e '/1 "%02x"' -n20)"
-  [ -n "$sha1" ] || return 1
-  grep -F " $sha1" /etc/firmwaredb | head -n1 | cut -d' ' -f1
+  [ -n "$sha1" ] && grep -F " $sha1" /etc/firmwaredb | head -n1 | cut -d' ' -f1
+}
+
+kernelBoard() {
+  sed -n '1s/.*CLOVER \([^ ]*\).*/\1/p' /etc/issue
 }
 
 moduleName() {
@@ -39,7 +42,10 @@ start() {
 
   grep -qF "dp-hvc" "$squashfs/etc/issue" 2>/dev/null || return 0
   [ "$(cat "$squashfs/etc/clover/boardtype" 2>/dev/null)" = "dp-hvc" ] || return 0
-  case "$(stockFirmware)" in
+  local stock
+  stock="$(stockFirmware)"
+  [ -n "$stock" ] || stock="$(kernelBoard)"
+  case "$stock" in
     dp-nes-*|dp-shvc-*) ;;
     *) return 0 ;;
   esac
